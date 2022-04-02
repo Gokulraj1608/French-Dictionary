@@ -1,23 +1,95 @@
-# Compiled class file
-*.class
+import java.io.*;
+import java.util.*;
+import java.io.FileWriter;
+import java.io.File;
 
-# Log file
-*.log
 
-# BlueJ files
-*.ctxt
+class TranslateWordsChallenge {
+    public static void main(String[] args) {
+        long startTime = System.nanoTime();
+        long beforeUsedMem=Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+        //Since French characters are also going to be read, we have to change the file-encoding to CharSet "UTF-8".
+        System.setProperty("file.encoding", "UTF-8");
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+        //For lookUp operations HashMap is best. So a HashMap for french-dictionary is created.
+        Map<String, String> frenchDict=new HashMap<>();
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+        //Another HashMap is created for maintaining frequency of the words changed.
+        Map<String, Integer> freq=new HashMap<>();
+        
+        /* Reading the french_dictionary.csv file and entering data into the freq-HashMap */
+        try {
+            String line="";
+            //Creating BufferedReader for file(french_dictionary.csv)
+            FileReader newFile2=new FileReader("C:\\Users\\HP\\Desktop\\TranslateWords Challenge\\french_dictionary.csv");
+            BufferedReader reader2=new BufferedReader(newFile2);
+            while((line=reader2.readLine())!=null){
+                String[] pair=line.split(",");
+                frenchDict.put(pair[0], pair[1]);
+            }
+            //reader2 is closed.
+            reader2.close();    
+        }
+        catch (Exception e) {
+            System.out.println("An error occured while reading from file(french_dictionary.csv)");
+            e.printStackTrace();
+        }
+
+        /* Reading the inupt_file(ts.shakespeare.txt) and producing modified output_file(output.txt) */
+        try {
+
+            //Creating new File to store the modified output
+            File file=new File("C:\\Users\\HP\\Desktop\\TranslateWords Challenge\\t8.shakespeare.translated.txt");
+            file.createNewFile();
+            //Creating the FileWriter for the new File(output.txt) created
+            FileWriter fw_op = new FileWriter(file, false);
+
+            //Creating a BufferedReader to read the Input File(t8.shakespeare.txt)
+            FileReader newFile = new FileReader("C:\\Users\\HP\\Desktop\\TranslateWords Challenge\\t8.shakespeare.txt");
+            BufferedReader reader = new BufferedReader(newFile);
+            int c;
+            StringBuilder sb=new StringBuilder();
+            while((c = reader.read()) != -1) {
+                char character = (char) c;
+                if(Character.isAlphabetic(character)){
+                    sb.append(character);
+                }
+                else{
+                    if(sb.length()!=0){
+                        String str=sb.toString();
+                        if(frenchDict.containsKey(str)){
+                            freq.put(str,freq.getOrDefault(str, 0)+1);
+                            fw_op.write(frenchDict.get(str));
+                        }
+                        else{
+                            fw_op.write(str);
+                        }
+                        sb.setLength(0);
+                    }
+                    fw_op.write(c);
+                }
+            }
+            reader.close();
+            fw_op.close();
+            
+            /* Creating frequency.csv  */
+            File freqFile = new File("C:\\Users\\HP\\Desktop\\TranslateWords Challenge\\frequency.csv");
+            freqFile.createNewFile();
+
+            FileWriter fw = new FileWriter(freqFile,false);
+            for(String str : freq.keySet()){
+                String temp=str+","+frenchDict.get(str)+","+freq.get(str)+"\n";
+                fw.write(temp);
+            }
+            fw.close();
+        }
+        catch (Exception e) {
+            System.out.println("An error Occured while creating file(frequency.csv)");
+            e.printStackTrace();
+        }
+        long afterUsedMem=Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();
+        System.out.println("Memory Used : " + ((afterUsedMem-beforeUsedMem)/(double)(1024*1024)));    
+        System.out.println("Exection Time : " + ((System.nanoTime()-startTime)/60000000000D) + "minutes");
+    }
+}
